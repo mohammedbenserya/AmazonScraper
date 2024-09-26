@@ -1,0 +1,11 @@
+pydantic
+requests
+bs4
+selenium
+webdriver-manager
+fake_useragent
+pyvirtualdisplay
+lxml
+python-decouple
+colorlog
+pyfiglet

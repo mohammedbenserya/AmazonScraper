@@ -1,0 +1,7 @@
+/.env
+/setup.py
+/build/
+/amazon_scraper.egg-info/
+/examples/selenium/
+/amazon_scraper/logs/
+/venv/
