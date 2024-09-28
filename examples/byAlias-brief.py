@@ -1,28 +1,54 @@
 from AmazonSmartScraper.scraper import AmazonScraper
 
 import pandas as pd
+# Initialize the AmazonScraper with Selenium headers
 scraper = AmazonScraper(use_selenium_headers=True)
+
+# set the proxy
+scraper.set_proxy('185.76.11.212',10096)
+
+# Alias for the product category
 alias = 'specialty-aps'
+
+# Get the initial ASINs and total pages for the given alias
 res = scraper.get_asins_by_alias(alias)
+
+# List to store all product details
 all_products = []
+
+# CSV file name to save the results
 csv_file = f'{alias}.csv'
+
 # First loop to get all ASINs
 all_asins = []
-print(res[1])
-for page in range(1, res[1] + 1):
+total_pages = res[1]
+print(total_pages)
+
+for page in range(1, total_pages + 1):
     print(page)
     res = scraper.get_asins_by_alias(alias, page)
-    all_asins = [asin['asin'] for asin in res[0] if not any(product['asin'] == asin['asin'] for product in all_products)]
-    asins = ','.join([asin for asin in all_asins])
-    if len(all_asins) == 0:
+
+    # Extract new ASINs that are not already in the list
+    new_asins = [asin['asin'] for asin in res[0] if asin['asin'] not in all_asins]
+    all_asins.extend(new_asins)
+
+    if not new_asins:
         break
+
+    # Join ASINs into a comma-separated string
+    asins = ','.join(new_asins)
+
+    # Get brief product details for the ASINs
     product_briefs = scraper.get_products_brief(asins)
+
     for asin in product_briefs:
-        print(asin['asin'])
-        if any(product['asin'] == asin['asin'] for product in all_products):
+        if asin['asin'] in all_asins:
             continue
+
+        # Generate simple product details from JSON
         product_details = scraper.generate_product.get_simple_product_from_json(item=asin, alias=alias, page=page)
-        print(product_details)
         all_products.append(product_details.dict())
-        df = pd.DataFrame(all_products)
-        df.to_csv(csv_file, index=False, encoding='utf-8')
+
+    # Save the product details to a CSV file
+    df = pd.DataFrame(all_products)
+    df.to_csv(csv_file, index=False, encoding='utf-8')
