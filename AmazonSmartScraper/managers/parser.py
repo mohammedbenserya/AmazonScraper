@@ -13,7 +13,7 @@ class AParser:
 
         :param logger: Logger instance for logging messages.
         """
-        self.logger = logger
+        self.__logger = logger
 
     @staticmethod
     def get_product_price(price_tag):
@@ -51,7 +51,7 @@ class AParser:
         :return: Product object with parsed information.
         """
         if '/errors/validateCaptcha' in soup.get_text():
-            self.logger.error("Captcha validation error. please try using a proxy")
+            self.__logger.error("Captcha validation error. please try using a proxy")
             return Product(asin=asin, alias=alias, keyword=keyword, page=page)
         url = f'https://www.amazon.com/dp/{asin}'
         title = soup.select_one('.a-size-mini.a-spacing-none.a-color-base.s-line-clamp-2').get_text(
@@ -92,7 +92,7 @@ class AParser:
 
         return product
 
-    def parse_ssf_json(self, ssf_span) -> dict:
+    def __parse_ssf_json(self, ssf_span) -> dict:
         """
         Parse SSF JSON data from the given span tag.
 
@@ -102,14 +102,14 @@ class AParser:
         try:
             data_attr = ssf_span.get('data-ssf-share-icon')
         except AttributeError as e:
-            self.logger.error(f"Error accessing 'data-ssf-share-icon' attribute: {e}")
+            self.__logger.error(f"Error accessing 'data-ssf-share-icon' attribute: {e}")
             return {
                 'title': '',
                 'image': '',
                 'description': '',
             }
         if not data_attr:
-            self.logger.warning("No data-ssf-share-icon attribute found.")
+            self.__logger.warning("No data-ssf-share-icon attribute found.")
             return {
                 'title': '',
                 'image': '',
@@ -120,7 +120,7 @@ class AParser:
         description = data.get('text', '')
         title = data.get('title', '')
         image = data.get('image', '')
-        self.logger.debug(f"SSF JSON data: {data}")
+        self.__logger.debug(f"SSF JSON data: {data}")
         product_dict = {
             'title': title,
             'image': image,
@@ -141,21 +141,21 @@ class AParser:
         :return: Product object with parsed information.
         """
         if '/errors/validateCaptcha' in soup.get_text():
-            self.logger.error("Captcha validation error. please try using a proxy")
+            self.__logger.error("Captcha validation error. please try using a proxy")
             return Product(asin=asin, alias=alias, keyword=keyword, page=page)
         if not asin or asin == '':
-            self.logger.warning("ASIN is empty or not provided.")
+            self.__logger.warning("ASIN is empty or not provided.")
             return Product(asin=asin, alias=alias, keyword=keyword, page=page)
         url = f'https://www.amazon.com/dp/{asin}'
         title_tag = soup.select_one('#productTitle')
         title = title_tag.get_text(strip=True) if title_tag else 'unavailable'
         ssf_span = soup.find('span', id='ssf-share-action')
-        ssf_dict = self.parse_ssf_json(ssf_span) if ssf_span else {}
+        ssf_dict = self.__parse_ssf_json(ssf_span) if ssf_span else {}
 
         title = soup.select_one('#productTitle')
         title = title.get_text(strip=True) if title else ssf_dict.get('title', 'unavailable')
 
-        self.logger.info(f'Product title: {title}')
+        self.__logger.info(f'Product title: {title}')
         # Image URL
         image_tag = soup.select_one('#landingImage') or soup.select_one('#imgTagWrapperId img')
         image_url = image_tag.get('amazonScraper', image_tag.get('data-old-hires', 'unavailable')) if image_tag else ssf_dict.get('image', 'unavailable')
@@ -190,7 +190,7 @@ class AParser:
         table_data = []
 
         if product_data is None:
-            self.logger.warning("Product data not found.")
+            self.__logger.warning("Product data not found.")
             # html_content = soup.prettify()
             #
             # # Specify the file path where you want to save the HTML content
@@ -207,7 +207,7 @@ class AParser:
                 cells = row.find_all('td')
                 row_data = {columns[i]: f'{cell.text}'.strip() for cell in cells}
                 table_data.append(row_data)
-            self.logger.info(f'Product metadata: {table_data}')
+            self.__logger.info(f'Product metadata: {table_data}')
 
         data = {
             'asin': asin,
@@ -264,5 +264,5 @@ class AParser:
                 page=page
             )
         except Exception as e:
-            self.logger.error(f"Error parsing product from JSON: {e}")
+            self.__logger.error(f"Error parsing product from JSON: {e}")
             return Product(asin=item.get('asin'), alias=alias, keyword=keyword, page=page)

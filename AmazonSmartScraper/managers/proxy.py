@@ -12,11 +12,11 @@ class ProxyManager:
         :param logger: Logger instance for logging information and errors.
         :param session: Session instance for making HTTP requests.
         """
-        self.logger = logger
+        self.__logger = logger
         self.session = session
-        self.proxies = {}
+        self.__proxies = {}
 
-    def validate_proxy(self) -> bool:
+    def __validate_proxy(self) -> bool:
         """
         Validates the current proxy settings by making a request to a test URL.
 
@@ -24,11 +24,11 @@ class ProxyManager:
         """
         test_url = "https://checkmyip.org/"
         try:
-            response = requests.get(test_url, proxies=self.proxies, timeout=5)
-            self.logger.info(f"Proxy validation response: {response.text.split('<TITLE>')[1].split('</TITLE>')[0]}")
+            response = requests.get(test_url, proxies=self.__proxies, timeout=5)
+            self.__logger.info(f"Proxy validation response: {response.text.split('<TITLE>')[1].split('</TITLE>')[0]}")
             return response.status_code == 200
         except requests.RequestException as e:
-            self.logger.error(f"Proxy validation error: {e}")
+            self.__logger.error(f"Proxy validation error: {e}")
             return False
 
     def set_proxy(self, host: str, port: int, user: str = None, password: str = None) -> None:
@@ -45,7 +45,7 @@ class ProxyManager:
         else:
             proxy = f"http://{host}:{port}"
 
-        self.proxies = {
+        self.__proxies = {
             "http": proxy,
             "https": proxy,
         }
@@ -57,13 +57,13 @@ class ProxyManager:
 
         :return: Dictionary containing the current proxy settings.
         """
-        return self.proxies
+        return self.__proxies
 
     def update_proxy(self) -> None:
         """
         Updates the session's proxy settings if the current proxy is valid.
         """
-        if self.validate_proxy():
-            self.session.proxies.update(self.proxies)
+        if self.__validate_proxy():
+            self.session.proxies.update(self.__proxies)
         else:
-            self.logger.warning("Proxy validation failed. Proxy not set.")
+            self.__logger.warning("Proxy validation failed. Proxy not set.")

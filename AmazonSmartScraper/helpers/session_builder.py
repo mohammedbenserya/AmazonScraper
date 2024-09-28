@@ -4,12 +4,12 @@ from webdriver_manager.chrome import ChromeDriverManager
 import requests
 import json
 from selenium import webdriver
-import logging
 import os
 from fake_useragent import UserAgent
 from pyvirtualdisplay import Display
 import traceback
 import platform
+from AmazonSmartScraper.config import set_custom_log_level, logger
 
 class SessionBuilder:
     """
@@ -25,12 +25,13 @@ class SessionBuilder:
         self.driver = None
         self.url = url
         self.headers = {}
-        self.logger = logging.getLogger(__name__)
+        set_custom_log_level()
+        self.__logger = logger
         self.log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "log")
         os.makedirs(self.log_dir, exist_ok=True)
-        self.setup_driver()
+        self.__setup_driver()
 
-    def setup_driver(self) -> None:
+    def __setup_driver(self) -> None:
         """
         Set up the Selenium WebDriver with the necessary options and configurations.
         """
@@ -70,10 +71,28 @@ class SessionBuilder:
                 "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             )
         except Exception as e:
-            self.logger.error(f"Error setting up driver: {str(e)}")
+            self.__logger.error(f"Error setting up driver: {str(e)}")
             traceback.print_exc()
 
-    def process_browser_log_entry(self, entry):
+    def get_driver(self) -> webdriver.Chrome:
+        """
+        Retrieve the Selenium WebDriver instance.
+
+        :return: The Selenium WebDriver instance.
+        """
+        return self.driver
+
+    def close_driver(self) -> None:
+        """
+        Close the Selenium WebDriver instance.
+        """
+        try:
+            self.driver.quit()
+        except Exception as e:
+            self.__logger.error(f"Error closing driver: {str(e)}")
+            traceback.print_exc()
+
+    def __process_browser_log_entry(self, entry):
         """
         Process a single browser log entry.
 
@@ -84,7 +103,7 @@ class SessionBuilder:
             response = json.loads(entry['message'])['message']
             return response
         except Exception as e:
-            self.logger.error(f"Error processing browser log entry: {str(e)}")
+            self.__logger.error(f"Error processing browser log entry: {str(e)}")
             traceback.print_exc()
 
     def get_headers(self) -> dict:
@@ -96,7 +115,7 @@ class SessionBuilder:
         try:
             self.driver.get(self.url)
             browser_log = self.driver.get_log('performance')
-            events = [self.process_browser_log_entry(entry) for entry in browser_log]
+            events = [self.__process_browser_log_entry(entry) for entry in browser_log]
             headers = {}
             for event in events:
                 if 'Network.requestWillBeSentExtraInfo' in event['method']:
@@ -107,7 +126,7 @@ class SessionBuilder:
             # input("Press Enter to continue...")
             return headers
         except Exception as e:
-            self.logger.error(f"Error getting headers: {str(e)}")
+            self.__logger.error(f"Error getting headers: {str(e)}")
             traceback.print_exc()
 
     def session(self) -> requests.Session:
@@ -121,7 +140,7 @@ class SessionBuilder:
             session.headers.update(self.get_headers())
             return session
         except Exception as e:
-            self.logger.error(f"Error creating session: {str(e)}")
+            self.__logger.error(f"Error creating session: {str(e)}")
             traceback.print_exc()
 
     def make_request(self) -> str:
@@ -135,11 +154,11 @@ class SessionBuilder:
             session = requests.Session()
             response = session.get(self.url, headers=headers)
 
-            self.logger.info("\nResponse Content:")
-            self.logger.info(response.text)
+            self.__logger.info("\nResponse Content:")
+            self.__logger.info(response.text)
             return response.text
         except Exception as e:
-            self.logger.error(f"Error making request: {str(e)}")
+            self.__logger.error(f"Error making request: {str(e)}")
             traceback.print_exc()
 
             return ''

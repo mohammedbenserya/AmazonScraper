@@ -130,7 +130,7 @@ class TestAmazonScraper(unittest.TestCase):
         mock_fetch_page.return_value = mock_response
 
         scraper = AmazonScraper()
-        data, pagination_count, src = scraper.extract_data_from_json(mock_response, 'http://example.com')
+        data, pagination_count, src = scraper.__extract_data_from_json(mock_response, 'http://example.com')
 
         self.assertIsInstance(data, list)
         self.assertIsInstance(pagination_count, int)
@@ -181,7 +181,7 @@ class TestAmazonScraper(unittest.TestCase):
         mock_fetch_page.return_value = mock_response
 
         scraper = AmazonScraper()
-        data, pagination_count, src = scraper.extract_data_from_json(mock_response, 'http://example.com')
+        data, pagination_count, src = scraper.__extract_data_from_json(mock_response, 'http://example.com')
 
         self.assertIsInstance(data, list)
         self.assertEqual(data, [])

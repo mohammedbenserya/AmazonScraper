@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from datetime import datetime
 from pyfiglet import Figlet
 
+from AmazonSmartScraper import __version__
+
 load_dotenv()
 
 # Create logger
@@ -24,9 +26,7 @@ class CustomFileHandler(logging.FileHandler):
         super().__init__(filename, mode, encoding, delay)
         # Write the version if the file is newly created
         if not is_file_existing:
-            version = os.getenv('VERSION')
-            if version:
-                self.print_ascii_banner(f"AmazonSmartScraper py V{version}", font="slant")
+            self.print_ascii_banner(f"AmazonSmartScraper py V{__version__}", font="slant")
 
     def print_ascii_banner(self, text, font: str = "standard"):
         """Prints an ASCII banner using the figlet library.
@@ -50,7 +50,7 @@ if not logger.handlers:
     current_date = datetime.now().date()
     # current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-    version = '1.0.0'
+    version = __version__
     # version_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../logs/{version}'))
     log_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'logs', version))
 

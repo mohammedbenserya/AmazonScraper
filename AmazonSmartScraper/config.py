@@ -1,10 +1,13 @@
 import pathlib
+from xml.etree.ElementTree import VERSION
+
 from decouple import Config, RepositoryEnv
 from  AmazonSmartScraper.log_config import logger,file_handler,console_handler
 import logging
 
 
 import os
+
 
 def set_custom_log_level() -> None:
     """
@@ -37,9 +40,6 @@ def set_custom_log_level() -> None:
             logger.warning('LOG_LEVEL is not set.')
     else:
         logger.warning('LOG_LEVEL is not in the environment variables.')
-
-
-
 
 
 

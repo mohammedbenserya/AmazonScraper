@@ -18,18 +18,18 @@ class ChromeSessionManager:
         :param use_selenium_headers: Whether to use headers that mimic Selenium.
         :param proxies: Optional dictionary of proxies to use.
         """
-        self.use_selenium_headers = use_selenium_headers
-        self.proxies = proxies
+        self.__use_selenium_headers = use_selenium_headers
+        self.__proxies = proxies
         self.headers = {}
         self.session = None
-        self.init_session()
+        self.__init_session()
         set_custom_log_level()
-        self.logger = logger
+        self.__logger = logger
 
-        self.proxy_manager = ProxyManager(logger=self.logger, session=self.session)
-        self.logger.info('ChromeSessionManager initialized')
+        self.proxy_manager = ProxyManager(logger=self.__logger, session=self.session)
+        self.__logger.info('ChromeSessionManager initialized')
 
-    def init_chrome_session(self, url: str = 'https://www.amazon.co.uk') -> None:
+    def __init_chrome_session(self, url: str = 'https://www.amazon.co.uk') -> None:
         """
         Initializes a Chrome session with headers and session from SessionBuilder.
 
@@ -38,15 +38,16 @@ class ChromeSessionManager:
         web_scraper = SessionBuilder(url)
         self.headers = web_scraper.get_headers()
         self.session = web_scraper.session()
-        if self.proxies:
+        web_scraper.close_driver()
+        if self.__proxies:
             self.proxy_manager.update_proxy()
 
-    def init_session(self) -> None:
+    def __init_session(self) -> None:
         """
         Initializes the session based on whether Selenium headers are used.
         """
-        if self.use_selenium_headers:
-            self.init_chrome_session()
+        if self.__use_selenium_headers:
+            self.__init_chrome_session()
         else:
             self.headers = {
                 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',

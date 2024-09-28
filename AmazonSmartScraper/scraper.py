@@ -20,7 +20,7 @@ class AmazonScraper(AFetcher):
         self.proxies = None
         self.use_selenium_headers = use_selenium_headers
         super().__init__(self.use_selenium_headers, self.proxies)
-        self.logger.info('AmazonScraper initialized')
+        self._logger.info('AmazonScraper initialized')
 
     @property
     def generate_product(self) -> AParser:
@@ -30,5 +30,5 @@ class AmazonScraper(AFetcher):
         Returns:
             AParser: An instance of AParser.
         """
-        return AParser(self.logger)
+        return AParser(self._logger)
 
