@@ -9,7 +9,7 @@ from pyfiglet import Figlet
 load_dotenv()
 
 # Create logger
-logger = logging.getLogger('amazon_scraper')
+logger = logging.getLogger('AmazonSmartScraper')
 
 # Set default log level
 
@@ -26,7 +26,7 @@ class CustomFileHandler(logging.FileHandler):
         if not is_file_existing:
             version = os.getenv('VERSION')
             if version:
-                self.print_ascii_banner(f"amazon_scraper py V{version}", font="slant")
+                self.print_ascii_banner(f"AmazonSmartScraper py V{version}", font="slant")
 
     def print_ascii_banner(self, text, font: str = "standard"):
         """Prints an ASCII banner using the figlet library.

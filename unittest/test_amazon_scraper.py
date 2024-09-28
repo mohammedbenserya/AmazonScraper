@@ -1,11 +1,79 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from amazon_scraper.scraper import AmazonScraper
+
+from AmazonSmartScraper.schemas.product import Product
+from AmazonSmartScraper.scraper import AmazonScraper
+from bs4 import BeautifulSoup
 
 
 class TestAmazonScraper(unittest.TestCase):
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+
+
+    def __init__(self, methodName: str = "runTest"):
+        super().__init__(methodName)
+        self.parser = None
+
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.generate_product')
+    def test_get_detailed_product_from_html(self, mock_generate_product):
+        html_content = """
+        <html>
+        <head><title>Test Product</title></head>
+        <body>
+            <span id="productTitle">Test Product Title</span>
+            <span id="ssf-share-action" data-ssf-share-icon='{"title": "SSF Title", "image": "SSF Image", "text": "SSF Description"}'></span>
+            <img id="landingImage"/>
+            <div id="feature-bullets">Test Description</div>
+            <span class="priceToPay">$19.99</span>
+            <a id="bylineInfo">Test Brand</a>
+            <span id="acrPopover" title="4.5 out of 5 stars"></span>
+            <span id="acrCustomerReviewText">123 ratings</span>
+            <div id="productDetails_techSpec_sections">
+                <table>
+                    <tr><th>Key</th><td>Value</td></tr>
+                </table>
+            </div>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html_content, 'html.parser')
+        asin = 'B000123456'
+
+        # Mock the return value of generate_product
+        mock_generate_product.get_detailed_product_from_html.return_value = Product(
+            asin=asin,
+            url='',
+            title='Test Product Title',
+            image='unavailable',
+            description='Test Description',
+            price_raw='',
+            price_text='',
+            price=19.99,
+            currency='$',
+            rating='4.5 out of 5 stars',
+            brand='Test Brand',
+            nbr_rating='123 ratings',
+            is_out_of_stock=False,
+            metadata=[{'Key': 'Value'}],
+            alias='',
+            keyword='',
+            page=1
+        )
+
+        product = mock_generate_product.get_detailed_product_from_html(soup, asin)
+
+        self.assertEqual(product.asin, asin)
+        self.assertEqual(product.title, 'Test Product Title')
+        self.assertEqual(product.image, 'unavailable')
+        self.assertEqual(product.description, 'Test Description')
+        self.assertEqual(product.price, 19.99)
+        self.assertEqual(product.currency, '$')
+        self.assertEqual(product.rating, '4.5 out of 5 stars')
+        self.assertEqual(product.brand, 'Test Brand')
+        self.assertEqual(product.nbr_rating, '123 ratings')
+        self.assertFalse(product.is_out_of_stock)
+        self.assertEqual(product.metadata, [{'Key': 'Value'}])
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_get_asins_by_link(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.content = b'<html></html>'
@@ -17,7 +85,7 @@ class TestAmazonScraper(unittest.TestCase):
         self.assertIsInstance(asins, list)
         self.assertIsInstance(pagination_count, int)
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_get_products_brief(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.json.return_value = {'asin': 'B000123'}
@@ -29,7 +97,7 @@ class TestAmazonScraper(unittest.TestCase):
         self.assertIsInstance(product_info, dict)
         self.assertIn('asin', product_info)
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_get_asins_by_alias(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.content = b'{"data-search-metadata": {}, "search-result-": {}}'
@@ -42,7 +110,7 @@ class TestAmazonScraper(unittest.TestCase):
         self.assertIsInstance(pagination_count, int)
         self.assertIsInstance(src, str)
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_get_asins_by_keyword(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.content = b'{"data-search-metadata": {}, "search-result-": {}}'
@@ -55,7 +123,7 @@ class TestAmazonScraper(unittest.TestCase):
         self.assertIsInstance(pagination_count, int)
         self.assertIsInstance(src, str)
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_extract_data_from_json(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.content = b'{"data-search-metadata": {}, "search-result-": {}}'
@@ -68,7 +136,7 @@ class TestAmazonScraper(unittest.TestCase):
         self.assertIsInstance(pagination_count, int)
         self.assertIsInstance(src, str)
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_get_asins_by_link_no_pagination(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.content = b'<html></html>'
@@ -80,7 +148,7 @@ class TestAmazonScraper(unittest.TestCase):
         self.assertIsInstance(asins, list)
         self.assertEqual(pagination_count, 1)
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_get_products_brief_empty_response(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.json.return_value = {}
@@ -93,7 +161,7 @@ class TestAmazonScraper(unittest.TestCase):
         self.assertEqual(product_info, {})
 
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_get_asins_by_keyword_special_characters(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.content = b'{"data-search-metadata": {}, "search-result-": {}}'
@@ -106,7 +174,7 @@ class TestAmazonScraper(unittest.TestCase):
         self.assertIsInstance(pagination_count, int)
         self.assertIsInstance(src, str)
 
-    @patch('amazon_scraper.scraper.AmazonScraper.fetch_page')
+    @patch('AmazonSmartScraper.scraper.AmazonScraper.fetch_page')
     def test_extract_data_from_json_invalid_json(self, mock_fetch_page):
         mock_response = MagicMock()
         mock_response.content = b'invalid json'

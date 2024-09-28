@@ -3,8 +3,8 @@ import requests
 from fake_useragent import UserAgent
 from .proxy import ProxyManager
 
-from amazon_scraper.helpers.session_builder import SessionBuilder
-from amazon_scraper.config import set_custom_log_level,logger
+from AmazonSmartScraper.helpers.session_builder import SessionBuilder
+from AmazonSmartScraper.config import set_custom_log_level,logger
 
 class ChromeSessionManager:
     """

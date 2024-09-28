@@ -3,5 +3,5 @@
 /build/
 /amazon_scraper.egg-info/
 /examples/selenium/
-/amazon_scraper/logs/
+/AmazonSmartScraper/logs/
 /venv/

@@ -1,4 +1,4 @@
-from amazon_scraper.scraper import AmazonScraper
+from AmazonSmartScraper.scraper import AmazonScraper
 
 import pandas as pd
 scraper = AmazonScraper(use_selenium_headers=True)

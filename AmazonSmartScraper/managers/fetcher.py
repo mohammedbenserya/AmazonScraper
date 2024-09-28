@@ -1,10 +1,10 @@
 import requests,json
 from bs4 import BeautifulSoup
 
-from amazon_scraper.managers.session import ChromeSessionManager
+from AmazonSmartScraper.managers.session import ChromeSessionManager
 from typing import List, Tuple, Any
 from lxml import html
-from amazon_scraper.config import set_custom_log_level, logger
+from AmazonSmartScraper.config import set_custom_log_level, logger
 
 class AFetcher:
     """

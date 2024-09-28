@@ -1,5 +1,5 @@
-from amazon_scraper.managers.fetcher import AFetcher
-from amazon_scraper.managers.parser import AParser
+from AmazonSmartScraper.managers.fetcher import AFetcher
+from AmazonSmartScraper.managers.parser import AParser
 
 class AmazonScraper(AFetcher):
     """

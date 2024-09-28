@@ -1,6 +1,6 @@
 import pathlib
 from decouple import Config, RepositoryEnv
-from  amazon_scraper.log_config import logger,file_handler,console_handler
+from  AmazonSmartScraper.log_config import logger,file_handler,console_handler
 import logging
 
 

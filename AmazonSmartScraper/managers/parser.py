@@ -1,7 +1,7 @@
 import re,json
 from bs4 import BeautifulSoup
 
-from amazon_scraper.schemas.product import Product
+from AmazonSmartScraper.schemas.product import Product
 class AParser:
     """
     AParser class is responsible for parsing product information from HTML and JSON data.
@@ -120,7 +120,7 @@ class AParser:
         description = data.get('text', '')
         title = data.get('title', '')
         image = data.get('image', '')
-
+        self.logger.debug(f"SSF JSON data: {data}")
         product_dict = {
             'title': title,
             'image': image,
@@ -149,35 +149,21 @@ class AParser:
         url = f'https://www.amazon.com/dp/{asin}'
         title_tag = soup.select_one('#productTitle')
         title = title_tag.get_text(strip=True) if title_tag else 'unavailable'
-        ssf_dict = {}
-        if title == 'unavailable':
-            ssf_span = soup.find('span', id='ssf-share-action')
-            ssf_dict = self.parse_ssf_json(ssf_span)
-            # html_content = soup.prettify()
-            #
-            # # Specify the file path where you want to save the HTML content
-            # file_path = f'{asin}.html'
-            #
-            # # Write the HTML content to the file
-            # with open(file_path, 'w', encoding='utf-8') as file:
-            #     file.write(html_content)
-            if ssf_dict['title'] != '':
-                title = ssf_dict['title']
+        ssf_span = soup.find('span', id='ssf-share-action')
+        ssf_dict = self.parse_ssf_json(ssf_span) if ssf_span else {}
+
+        title = soup.select_one('#productTitle')
+        title = title.get_text(strip=True) if title else ssf_dict.get('title', 'unavailable')
 
         self.logger.info(f'Product title: {title}')
         # Image URL
-        if ssf_dict and ssf_dict['image'] != '':
-            image_url = ssf_dict['image']
-        else:
-            image_tag = soup.select_one('#landingImage')
-            image_url = image_tag['amazonScraper'] if image_tag else 'unavailable'
+        image_tag = soup.select_one('#landingImage') or soup.select_one('#imgTagWrapperId img')
+        image_url = image_tag.get('amazonScraper', image_tag.get('data-old-hires', 'unavailable')) if image_tag else ssf_dict.get('image', 'unavailable')
 
         # Description
-        if ssf_dict and ssf_dict['description'] != '':
-            description = ssf_dict['description']
-        else:
-            description_tag = soup.select_one('#feature-bullets')
-            description = description_tag.get_text(strip=True) if description_tag else 'unavailable'
+        description_tag = soup.select_one('#feature-bullets')
+        description = description_tag.get_text(strip=True) if description_tag else ssf_dict.get('description', 'unavailable')
+
         product_price, product_price_text, product_price_num, currency = self.get_product_price(
             soup.select_one('.priceToPay'))
 
