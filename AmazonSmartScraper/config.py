@@ -1,7 +1,3 @@
-import pathlib
-from xml.etree.ElementTree import VERSION
-
-from decouple import Config, RepositoryEnv
 from  AmazonSmartScraper.log_config import logger,file_handler,console_handler
 import logging
 

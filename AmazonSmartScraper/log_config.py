@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from pyfiglet import Figlet
 
-from AmazonSmartScraper import __version__
+from AmazonSmartScraper.version import __version__  # Updated import
 
 load_dotenv()
 

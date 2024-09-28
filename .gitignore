@@ -5,3 +5,4 @@
 /examples/selenium/
 /AmazonSmartScraper/logs/
 /venv/
+/examples/*.csv

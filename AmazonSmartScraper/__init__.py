@@ -1,3 +1,2 @@
 from .scraper import AmazonScraper
-
-__version__ = '1.0.1'
+from .version import __version__
