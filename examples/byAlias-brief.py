@@ -5,7 +5,7 @@ import pandas as pd
 scraper = AmazonScraper(use_selenium_headers=True)
 
 # set the proxy
-scraper.set_proxy('185.76.11.212',10096)
+scraper.set_proxy('91.228.216.36',10047)
 
 # Alias for the product category
 alias = 'specialty-aps'

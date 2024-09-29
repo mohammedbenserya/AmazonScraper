@@ -9,7 +9,6 @@ def set_custom_log_level() -> None:
     """
     Sets the custom log level for the logger based on environment variables.
     """
-    logger.info('In set_custom_log_level')
 
     if 'LOG_LEVEL' in os.environ:
         env_log_level = os.getenv('LOG_LEVEL')
@@ -28,7 +27,7 @@ def set_custom_log_level() -> None:
                 logger.setLevel(log_level)
                 file_handler.setLevel(env_log_level)
                 console_handler.setLevel(env_log_level)
-                logger.info('Log level set to %s}', env_log_level)
+                logger.info('Log level set to %s ', env_log_level)
             else:
                 logger.warning('Invalid log level: %s', env_log_level)
                 logger.warning('Log level set to WARNING}')

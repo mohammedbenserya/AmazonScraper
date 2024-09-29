@@ -1,7 +1,10 @@
-import re,json
+import re, json
 from bs4 import BeautifulSoup
 
+from AmazonSmartScraper.schemas.custom_errors import ParsingError
 from AmazonSmartScraper.schemas.product import Product
+
+
 class AParser:
     """
     AParser class is responsible for parsing product information from HTML and JSON data.
@@ -39,7 +42,8 @@ class AParser:
                 currency = '$'
         return product_price, product_price_text, product_price_num, currency
 
-    def get_simple_product_from_html(self, soup: BeautifulSoup, asin: str, alias: str = '', keyword: str = '', page: int = 1) -> Product:
+    def get_simple_product_from_html(self, soup: BeautifulSoup, asin: str, alias: str = '', keyword: str = '',
+                                     page: int = 1) -> Product:
         """
         Parse simple product information from HTML.
 
@@ -51,12 +55,11 @@ class AParser:
         :return: Product object with parsed information.
         """
         if '/errors/validateCaptcha' in soup.get_text():
-            self.__logger.error("Captcha validation error. please try using a proxy")
-            return Product(asin=asin, alias=alias, keyword=keyword, page=page)
+            raise ParsingError("Captcha validation error. Please try using a proxy", element="Captcha")
         url = f'https://www.amazon.com/dp/{asin}'
         title = soup.select_one('.a-size-mini.a-spacing-none.a-color-base.s-line-clamp-2').get_text(
             strip=True) if soup.select_one('.a-size-mini.a-spacing-none.a-color-base.s-line-clamp-2') else None
-        image = soup.find('img', {'data-image-latency': 's-product-image'})['amazonScraper'] if soup.find('img', {
+        image = soup.find('img', {'data-image-latency': 's-product-image'})['src'] if soup.find('img', {
             'data-image-latency': 's-product-image'}) else None
         description = soup.find('div', id='feature-bullets').get_text(strip=True) if soup.find('div',
                                                                                                id='feature-bullets') else None
@@ -129,7 +132,8 @@ class AParser:
 
         return product_dict
 
-    def get_detailed_product_from_html(self, soup: BeautifulSoup, asin: str, alias: str = '', keyword: str = '', page: int = 1) -> Product:
+    def get_detailed_product_from_html(self, soup: BeautifulSoup, asin: str, alias: str = '', keyword: str = '',
+                                       page: int = 1) -> Product:
         """
         Parse detailed product information from HTML.
 
@@ -141,8 +145,7 @@ class AParser:
         :return: Product object with parsed information.
         """
         if '/errors/validateCaptcha' in soup.get_text():
-            self.__logger.error("Captcha validation error. please try using a proxy")
-            return Product(asin=asin, alias=alias, keyword=keyword, page=page)
+            raise ParsingError("Captcha validation error. Please try using a proxy", element="Captcha")
         if not asin or asin == '':
             self.__logger.warning("ASIN is empty or not provided.")
             return Product(asin=asin, alias=alias, keyword=keyword, page=page)
@@ -158,11 +161,14 @@ class AParser:
         self.__logger.info(f'Product title: {title}')
         # Image URL
         image_tag = soup.select_one('#landingImage') or soup.select_one('#imgTagWrapperId img')
-        image_url = image_tag.get('amazonScraper', image_tag.get('data-old-hires', 'unavailable')) if image_tag else ssf_dict.get('image', 'unavailable')
+        image_url = image_tag.get('amazonScraper',
+                                  image_tag.get('data-old-hires', 'unavailable')) if image_tag else ssf_dict.get(
+            'image', 'unavailable')
 
         # Description
         description_tag = soup.select_one('#feature-bullets')
-        description = description_tag.get_text(strip=True) if description_tag else ssf_dict.get('description', 'unavailable')
+        description = description_tag.get_text(strip=True) if description_tag else ssf_dict.get('description',
+                                                                                                'unavailable')
 
         product_price, product_price_text, product_price_num, currency = self.get_product_price(
             soup.select_one('.priceToPay'))
@@ -230,7 +236,6 @@ class AParser:
         }
 
         return Product(**data)
-
 
     def get_simple_product_from_json(self, item: dict, alias: str = '', keyword: str = '', page: int = 1) -> Product:
         """

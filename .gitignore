@@ -7,3 +7,4 @@
 /venv/
 /examples/*.csv
 packaging.md
+/unittest/selenium/

@@ -1,3 +1,5 @@
+import logging
+
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
@@ -9,14 +11,13 @@ from fake_useragent import UserAgent
 from pyvirtualdisplay import Display
 import traceback
 import platform
-from AmazonSmartScraper.config import set_custom_log_level, logger
 
 class SessionBuilder:
     """
     A class to build and manage a Selenium WebDriver session for web scraping.
     """
 
-    def __init__(self, url: str = 'https://google.com') -> None:
+    def __init__(self,logger : logging.Logger, url: str = 'https://google.com') -> None:
         """
         Initialize the SessionBuilder with a URL and set up the driver.
 
@@ -25,7 +26,7 @@ class SessionBuilder:
         self.driver = None
         self.url = url
         self.headers = {}
-        set_custom_log_level()
+
         self.__logger = logger
         self.log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "log")
         os.makedirs(self.log_dir, exist_ok=True)

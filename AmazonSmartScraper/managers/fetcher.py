@@ -5,6 +5,8 @@ from AmazonSmartScraper.managers.session import ChromeSessionManager
 from typing import List, Tuple, Any
 from lxml import html
 from AmazonSmartScraper.config import set_custom_log_level, logger
+from AmazonSmartScraper.schemas.custom_errors import FetchPageError, ParsingError
+
 
 class AFetcher:
     """
@@ -22,8 +24,10 @@ class AFetcher:
         set_custom_log_level()
         self._logger = logger
         self.proxies = proxies
-        self.__chrome_session = ChromeSessionManager(use_selenium_headers, proxies)
+        self.__chrome_session = ChromeSessionManager(use_selenium_headers, self._logger, self.proxies)
         self._logger.info('AParser initialized')
+
+
 
     def _fetch_page(self, url: str) -> requests.Response:
         """
@@ -38,6 +42,8 @@ class AFetcher:
             self._logger.warning(f"Response code {response.status_code} received. Reinitiating session.")
             self.__chrome_session = ChromeSessionManager(use_selenium_headers=self.__use_selenium_headers, proxies=self.proxies)
             response = self.__chrome_session.session.get(url, headers=self.__chrome_session.headers, proxies=self.proxies)
+            if response.status_code != 200:
+                raise FetchPageError("Failed to fetch page", url=url, status_code=response.status_code)
         response.raise_for_status()
         return response
 
@@ -59,10 +65,14 @@ class AFetcher:
 
         :param page_content: The response object containing the page content.
         :return: List of ASINs extracted from the page.
+        :raises ParsingError: If no ASIN elements are found.
         """
         self._logger.info("Parsing page content.")
         tree = html.fromstring(page_content.content)
         data = tree.xpath('//div[@data-component-type="s-search-result"]/@data-asin')
+        if not data:
+            raise ParsingError("No ASIN elements found",
+                               element='//div[@data-component-type="s-search-result"]/@data-asin')
         return data
 
     def set_proxy(self, host: str, port: int, user: str = None, password: str = None) -> None:
@@ -164,8 +174,7 @@ class AFetcher:
             response = self._fetch_page(url)
             return response.json()
         except Exception as e:
-            self._logger.error(f"Error sending ASINs request: {str(e)}")
-            return {}
+            raise FetchPageError(f"Error sending ASINs request: {str(e)}")
 
 
     def get_asins_by_alias(self, alias: str = '', page: int = 1) -> tuple[list[dict[str, Any]], int, str]:

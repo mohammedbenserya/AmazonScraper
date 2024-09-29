@@ -1,17 +1,18 @@
+import logging
+
 import requests
 
 from fake_useragent import UserAgent
 from .proxy import ProxyManager
 
 from AmazonSmartScraper.helpers.session_builder import SessionBuilder
-from AmazonSmartScraper.config import set_custom_log_level,logger
 
 class ChromeSessionManager:
     """
     Manages a Chrome session for web scraping, with optional proxy support and custom headers.
     """
 
-    def __init__(self, use_selenium_headers: bool, proxies: dict = None):
+    def __init__(self, use_selenium_headers: bool, logger : logging.Logger, proxies: dict = None):
         """
         Initializes the ChromeSessionManager.
 
@@ -22,11 +23,11 @@ class ChromeSessionManager:
         self.__proxies = proxies
         self.headers = {}
         self.session = None
-        self.__init_session()
-        set_custom_log_level()
         self.__logger = logger
-
+        self.__init_session()
         self.proxy_manager = ProxyManager(logger=self.__logger, session=self.session)
+        if self.__proxies:
+            self.proxy_manager.update_proxy()
         self.__logger.info('ChromeSessionManager initialized')
 
     def __init_chrome_session(self, url: str = 'https://www.amazon.co.uk') -> None:
@@ -35,12 +36,11 @@ class ChromeSessionManager:
 
         :param url: The URL to initialize the session with.
         """
-        web_scraper = SessionBuilder(url)
+        web_scraper = SessionBuilder(self.__logger,url)
         self.headers = web_scraper.get_headers()
         self.session = web_scraper.session()
         web_scraper.close_driver()
-        if self.__proxies:
-            self.proxy_manager.update_proxy()
+
 
     def __init_session(self) -> None:
         """

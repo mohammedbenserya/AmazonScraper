@@ -1,5 +1,8 @@
 import requests
 
+
+
+
 class ProxyManager:
     """
     Manages proxy settings and validation for HTTP requests.
@@ -16,20 +19,31 @@ class ProxyManager:
         self.session = session
         self.__proxies = {}
 
-    def __validate_proxy(self) -> bool:
+    def __validate_proxy(self):
         """
-        Validates the current proxy settings by making a request to a test URL.
+        Validates the current proxy settings by checking the IP address.
+
+        This method sends a request to 'https://checkmyip.com' using the current proxy settings
+        and compares the IP address before and after setting the proxy. If the IP addresses
+        are different, the proxy is considered valid.
 
         :return: True if the proxy is valid, False otherwise.
         """
-        test_url = "https://checkmyip.org/"
         try:
-            response = requests.get(test_url, proxies=self.__proxies, timeout=5)
-            self.__logger.info(f"Proxy validation response: {response.text.split('<TITLE>')[1].split('</TITLE>')[0]}")
-            return response.status_code == 200
-        except requests.RequestException as e:
-            self.__logger.error(f"Proxy validation error: {e}")
-            return False
+            response = requests.get("https://api.ipify.org?format=text", proxies=self.__proxies)
+            current_ip = response.text
+            if response.status_code == 200 :
+                response =requests.get("https://api.ipify.org?format=text")
+                if response.status_code == 200:
+                    original_ip = response.text
+                    if current_ip != original_ip:
+                        self.__logger.info(f"Current IP: {current_ip}, Current IP: {original_ip}")
+                        return True
+        except Exception as e:
+            self.__logger.error(f"Proxy validation failed: {e}")
+        self.__logger.error(f"Proxy validation failed")
+        return False
+
 
     def set_proxy(self, host: str, port: int, user: str = None, password: str = None) -> None:
         """
@@ -63,6 +77,9 @@ class ProxyManager:
         """
         Updates the session's proxy settings if the current proxy is valid.
         """
+        if self.session is None:
+            self.__logger.error("Session is not initialized.")
+            return
         if self.__validate_proxy():
             self.session.proxies.update(self.__proxies)
         else:
