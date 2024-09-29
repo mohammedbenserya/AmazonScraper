@@ -39,8 +39,8 @@ class AFetcher:
         self._logger.info(f"Fetching page: {url}")
         response = self.__chrome_session.session.get(url, headers=self.__chrome_session.headers, proxies=self.proxies)
         if response.status_code != 200:
-            self._logger.warning(f"Response code {response.status_code} received. Reinitiating session.")
-            self.__chrome_session = ChromeSessionManager(use_selenium_headers=self.__use_selenium_headers, proxies=self.proxies)
+            self._logger.warning(f"Response code {response.status_code} received. Re initiating session.")
+            self.__chrome_session = ChromeSessionManager(use_selenium_headers=self.__use_selenium_headers,logger= self._logger,proxies=self.proxies)
             response = self.__chrome_session.session.get(url, headers=self.__chrome_session.headers, proxies=self.proxies)
             if response.status_code != 200:
                 raise FetchPageError("Failed to fetch page", url=url, status_code=response.status_code)
@@ -104,7 +104,7 @@ class AFetcher:
 
     def get_session(self) -> requests.Session:
         """
-        Get the current requests session.
+        Get the current requests' session.
 
         :return: The current requests.Session object.
         """
@@ -112,7 +112,7 @@ class AFetcher:
 
     def set_session(self, session: requests.Session) -> None:
         """
-        Set a new requests session.
+        Set a new requests' session.
 
         :param session: The new requests.Session object to set.
         """
@@ -204,7 +204,6 @@ class AFetcher:
         page_content = self._fetch_page(url)
         return self.__extract_data_from_json(page_content, f'https://www.amazon.com/s?k={keyword}&page={page}')
 
-
     def __extract_data_from_json(self, page_content, src) -> tuple[list[dict[str, Any]], int, str]:
         """
         Extract data from JSON content.
@@ -217,26 +216,32 @@ class AFetcher:
         items = page_content_str.split('&&&')
         data = []
         pagination_count = 1
+
         for item in items:
             try:
+                json_item = json.loads(item)
                 if 'data-search-metadata' in item:
-                    json_item = json.loads(item)
-                    if len(json_item) > 2 and  'metadata' in json_item[2]:
-                        metadata = json_item[2]['metadata']
-                        try:
-                            pagination_count = int(metadata['totalResultCount'] / metadata['asinOnPageCount']) - 1
-                        except ZeroDivisionError:
-                            self._logger.error(f"Error calculating pagination count: {metadata}")
-                            pagination_count = 1
-
-                    else:
-                        self._logger.error(f"Metadata not found in JSON: {json_item}")
-                if 'search-result-' in item:
-                    json_item = json.loads(item)
-                    if len(json_item) > 2  and 'html' in json_item[2] and 'asin' in json_item[2]:
-                        data.append({'html': json_item[2]['html'], 'asin': json_item[2]['asin']})
-                    else:
-                        self._logger.error(f"ASIN not found in JSON: {json_item}")
+                    pagination_count = self._extract_pagination_count(json_item)
+                elif 'search-result-' in item:
+                    self._extract_asin_data(json_item, data)
             except json.decoder.JSONDecodeError as e:
                 self._logger.error(f"Error decoding JSON: {e}")
+
         return data, pagination_count, src
+
+    def _extract_pagination_count(self, json_item) -> int:
+        if len(json_item) > 2 and 'metadata' in json_item[2]:
+            metadata = json_item[2]['metadata']
+            try:
+                return int(metadata['totalResultCount'] / metadata['asinOnPageCount']) - 1
+            except ZeroDivisionError:
+                self._logger.error(f"Error calculating pagination count: {metadata}")
+        else:
+            self._logger.error(f"Metadata not found in JSON: {json_item}")
+        return 1
+
+    def _extract_asin_data(self, json_item, data: list) -> None:
+        if len(json_item) > 2 and 'html' in json_item[2] and 'asin' in json_item[2]:
+            data.append({'html': json_item[2]['html'], 'asin': json_item[2]['asin']})
+        else:
+            self._logger.error(f"ASIN not found in JSON: {json_item}")

@@ -41,7 +41,7 @@ class ProxyManager:
                         return True
         except Exception as e:
             self.__logger.error(f"Proxy validation failed: {e}")
-        self.__logger.error(f"Proxy validation failed")
+        self.__logger.error("Proxy validation failed")
         return False
 
 

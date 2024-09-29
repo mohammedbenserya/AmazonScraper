@@ -1,6 +1,5 @@
 import re, json
 from bs4 import BeautifulSoup
-
 from AmazonSmartScraper.schemas.custom_errors import ParsingError
 from AmazonSmartScraper.schemas.product import Product
 
@@ -131,7 +130,48 @@ class AParser:
         }
 
         return product_dict
+    def __get_titles(self, soup: BeautifulSoup,ssf_dict : dict) -> str:
+        """
+        Get the title of the product from the HTML content.
 
+        :param soup: BeautifulSoup object containing the HTML content.
+        :param ssf_dict: Dictionary containing SSF JSON data.
+
+        :return: Title of the product.
+        """
+        title_tag = soup.select_one('#productTitle')
+        prod_title = title_tag.get_text(strip=True) if title_tag else ssf_dict.get('title', 'unavailable')
+
+        self.__logger.info(f'Product title: {prod_title}')
+        return prod_title
+    @staticmethod
+    def __get_img( soup: BeautifulSoup,ssf_dict : dict) -> str:
+        """
+        Get the title of the product from the HTML content.
+
+        :param soup: BeautifulSoup object containing the HTML content.
+        :param ssf_dict: Dictionary containing SSF JSON data.
+        :return: Title of the product.
+        """
+        image_tag = soup.select_one('#landingImage') or soup.select_one('#imgTagWrapperId img')
+        image_url = image_tag.get('amazonScraper',
+                                  image_tag.get('data-old-hires', 'unavailable')) if image_tag else ssf_dict.get(
+            'image', 'unavailable')
+        return image_url
+    @staticmethod
+    def __get_description( soup: BeautifulSoup,ssf_dict : dict) -> str:
+        """
+        Get the description of the product from the HTML content.
+
+        :param soup: BeautifulSoup object containing the HTML content.
+        :param ssf_dict: Dictionary containing SSF JSON data.
+        :return: Description of the product.
+        """
+        # Description
+        description_tag = soup.select_one('#feature-bullets')
+        description = description_tag.get_text(strip=True) if description_tag else ssf_dict.get('description',
+                                                                                                'unavailable')
+        return description
     def get_detailed_product_from_html(self, soup: BeautifulSoup, asin: str, alias: str = '', keyword: str = '',
                                        page: int = 1) -> Product:
         """
@@ -150,25 +190,12 @@ class AParser:
             self.__logger.warning("ASIN is empty or not provided.")
             return Product(asin=asin, alias=alias, keyword=keyword, page=page)
         url = f'https://www.amazon.com/dp/{asin}'
-        title_tag = soup.select_one('#productTitle')
-        title = title_tag.get_text(strip=True) if title_tag else 'unavailable'
         ssf_span = soup.find('span', id='ssf-share-action')
         ssf_dict = self.__parse_ssf_json(ssf_span) if ssf_span else {}
 
-        title = soup.select_one('#productTitle')
-        title = title.get_text(strip=True) if title else ssf_dict.get('title', 'unavailable')
 
-        self.__logger.info(f'Product title: {title}')
-        # Image URL
-        image_tag = soup.select_one('#landingImage') or soup.select_one('#imgTagWrapperId img')
-        image_url = image_tag.get('amazonScraper',
-                                  image_tag.get('data-old-hires', 'unavailable')) if image_tag else ssf_dict.get(
-            'image', 'unavailable')
 
-        # Description
-        description_tag = soup.select_one('#feature-bullets')
-        description = description_tag.get_text(strip=True) if description_tag else ssf_dict.get('description',
-                                                                                                'unavailable')
+
 
         product_price, product_price_text, product_price_num, currency = self.get_product_price(
             soup.select_one('.priceToPay'))
@@ -197,14 +224,6 @@ class AParser:
 
         if product_data is None:
             self.__logger.warning("Product data not found.")
-            # html_content = soup.prettify()
-            #
-            # # Specify the file path where you want to save the HTML content
-            # file_path = f'{asin}.html'
-            #
-            # # Write the HTML content to the file
-            # with open(file_path, 'w', encoding='utf-8') as file:
-            #     file.write(html_content)
 
         else:
             table = product_data.find('table')
@@ -218,9 +237,9 @@ class AParser:
         data = {
             'asin': asin,
             'url': url,
-            'title': title,
-            'image': image_url,
-            'description': description,
+            'title': self.__get_titles(soup,ssf_dict),
+            'image': self.__get_img(soup,ssf_dict),
+            'description': self.__get_description(soup,ssf_dict),
             'price_raw': product_price,
             'price_text': product_price_text,
             'price': product_price_num,
