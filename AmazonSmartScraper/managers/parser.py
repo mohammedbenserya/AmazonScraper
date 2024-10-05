@@ -269,7 +269,7 @@ class AParser:
         try:
             return Product(
                 asin=item.get('asin'),
-                url=f"https://www.amazon.com/db/{item.get('asin')}",
+                url=f"https://www.amazon.com/dp/{item.get('asin')}",
                 title=item.get('title'),
                 image=item.get('formattedImageUrl'),
                 description=None,
