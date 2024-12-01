@@ -1,5 +1,6 @@
 import requests,json
 from bs4 import BeautifulSoup
+from docutils.nodes import header
 
 from AmazonSmartScraper.managers.session import ChromeSessionManager
 from typing import List, Tuple, Any
@@ -29,21 +30,42 @@ class AFetcher:
 
 
 
-    def _fetch_page(self, url: str) -> requests.Response:
+    def _fetch_page(self, url: str, method: str = 'get', json: dict = None) -> requests.Response:
         """
         Fetch a page using the Chrome session.
 
         :param url: The URL of the page to fetch.
+        :param method: The HTTP method to use ('get' or 'post').
+        :param json: The json to send in the request (for POST requests).
         :return: The response object from the request.
         """
         self._logger.info(f"Fetching page: {url}")
-        response = self.__chrome_session.session.get(url, headers=self.__chrome_session.headers, proxies=self.proxies)
+        # json = json or {}
+        headers= {
+        "accept": "text/html,*/*",
+        "accept-encoding": "gzip, deflate, br, zstd",
+        "accept-language": "en-US,en;q=0.9",
+        "content-type": "application/json",
+        "origin": "https://www.amazon.com",
+        "priority": "u=1, i",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "sec-gpc": "1",
+        "user-agent": "Mozilla/5.0(iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15(KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+        "x-amazon-s-mismatch-behavior": "FALLBACK",
+        "x-requested-with": "XMLHttpRequest"
+    }
+        response = self.__chrome_session.session.request(method, url, headers=headers, proxies=self.proxies, json=json)
+
         if response.status_code != 200:
-            self._logger.warning(f"Response code {response.status_code} received. Re initiating session.")
-            self.__chrome_session = ChromeSessionManager(use_selenium_headers=self.__use_selenium_headers,logger= self._logger,proxies=self.proxies)
-            response = self.__chrome_session.session.get(url, headers=self.__chrome_session.headers, proxies=self.proxies)
+            self._logger.warning(f"Response code {response.status_code} received. Re-initiating session.")
+            self.__chrome_session = ChromeSessionManager(use_selenium_headers=self.__use_selenium_headers, logger=self._logger, proxies=self.proxies)
+            response = self.__chrome_session.session.request(method, url, headers=headers, proxies=self.proxies, json=json)
+
             if response.status_code != 200:
                 raise FetchPageError("Failed to fetch page", url=url, status_code=response.status_code)
+
         response.raise_for_status()
         return response
 
@@ -201,7 +223,7 @@ class AFetcher:
         """
         url = f'https://www.amazon.com/s/query?k={keyword}&page={page}'
         self._logger.info(f"Getting ASINs by keyword: {keyword}, page: {page}")
-        page_content = self._fetch_page(url)
+        page_content = self._fetch_page(url,method='post',json={"progressiveScroll":True,"wIndexMainSlot":26,"customer-action":"pagination"})
         return self.__extract_data_from_json(page_content, f'https://www.amazon.com/s?k={keyword}&page={page}')
 
     def __extract_data_from_json(self, page_content, src) -> tuple[list[dict[str, Any]], int, str]:

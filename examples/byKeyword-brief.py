@@ -1,10 +1,10 @@
 from AmazonSmartScraper.scraper import AmazonScraper
 import pandas as pd
 
-scraper = AmazonScraper(use_selenium_headers=True)
+scraper = AmazonScraper(use_selenium_headers=False)
 
 # set the proxy
-scraper.set_proxy('185.76.11.212',10096)
+# scraper.set_proxy('185.76.11.212',10096)
 
 
 keyword = 'phones'
@@ -15,11 +15,9 @@ csv_file = f'{keyword}.csv'
 
 # Get total pages from the initial response
 total_pages = res[1]
-print(total_pages)
 
 # Loop through all pages to get ASINs
 for page in range(1, total_pages + 1):
-    print(page)
     res = scraper.get_asins_by_keyword(keyword, page)
 
     # Extract new ASINs that are not already in the list
