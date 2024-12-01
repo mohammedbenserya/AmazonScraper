@@ -1,6 +1,5 @@
 import requests,json
 from bs4 import BeautifulSoup
-from docutils.nodes import header
 
 from AmazonSmartScraper.managers.session import ChromeSessionManager
 from typing import List, Tuple, Any
